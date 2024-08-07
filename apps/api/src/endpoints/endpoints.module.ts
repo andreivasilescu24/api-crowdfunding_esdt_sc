@@ -1,11 +1,9 @@
-import { Module } from "@nestjs/common";
-import { DynamicModuleUtils } from "@libs/common";
+import { Module } from '@nestjs/common';
+import { DynamicModuleUtils } from '@libs/common';
+import { CrowdfundingModule } from './crowdfunding/crowdfunding.module';
 
 @Module({
-  imports: [
-  ],
-  providers: [
-    DynamicModuleUtils.getNestJsApiConfigService(),
-  ],
+  imports: [CrowdfundingModule],
+  providers: [DynamicModuleUtils.getNestJsApiConfigService()],
 })
-export class EndpointsModule { }
+export class EndpointsModule {}
