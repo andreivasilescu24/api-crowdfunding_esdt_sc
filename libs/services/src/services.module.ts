@@ -1,25 +1,16 @@
 import { Global, Module } from '@nestjs/common';
-import { TokenService } from './token/token.service';
-import { UserService } from './user/user.service';
 import { DatabaseModule } from '@libs/database';
-import { ExampleService } from './example/example.service';
-import { DynamicModuleUtils } from '@libs/common';
+import { DynamicModuleUtils, NetworkConfigModule } from '@libs/common';
+import { CrowdfundingService } from './crowdfunding/crowdfunding.service';
 
 @Global()
 @Module({
   imports: [
+    NetworkConfigModule,
     DatabaseModule,
     DynamicModuleUtils.getCachingModule(),
   ],
-  providers: [
-    TokenService,
-    UserService,
-    ExampleService,
-  ],
-  exports: [
-    TokenService,
-    UserService,
-    ExampleService,
-  ],
+  providers: [CrowdfundingService],
+  exports: [CrowdfundingService],
 })
-export class ServicesModule { }
+export class ServicesModule {}
