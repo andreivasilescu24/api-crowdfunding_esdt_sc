@@ -1,5 +1,6 @@
 import {
   AbiRegistry,
+  Address,
   QueryRunnerAdapter,
   SmartContractQueriesController,
 } from '@multiversx/sdk-core/out';
@@ -57,5 +58,65 @@ export class CrowdfundingService {
     console.log('target', target);
 
     return target.toNumber();
+  }
+
+  public async getDeadline(): Promise<number> {
+    const query = this.queriesController.createQuery({
+      contract: this.networkConfigService.config.crowdfundingContract,
+      function: 'getDeadline',
+      arguments: [],
+    });
+
+    const response = await this.queriesController.runQuery(query);
+    const [deadline] = this.queriesController.parseQueryResponse(response);
+
+    console.log('deadline', deadline);
+
+    return deadline.toNumber();
+  }
+
+  public async getDeposit(address: string): Promise<BigNumber> {
+    const query = this.queriesController.createQuery({
+      contract: this.networkConfigService.config.crowdfundingContract,
+      function: 'getDeposit',
+      arguments: [Address.fromBech32(address)],
+    });
+
+    const response = await this.queriesController.runQuery(query);
+    const [deposit] = this.queriesController.parseQueryResponse(response);
+
+    console.log('deposit', deposit);
+
+    return deposit.toNumber();
+  }
+
+  public async getTokenId(): Promise<string> {
+    const query = this.queriesController.createQuery({
+      contract: this.networkConfigService.config.crowdfundingContract,
+      function: 'getCrowdfundingTokenIdentifier',
+      arguments: [],
+    });
+
+    const response = await this.queriesController.runQuery(query);
+    const [tokenId] = this.queriesController.parseQueryResponse(response);
+
+    console.log('tokenId', tokenId);
+
+    return tokenId.toString();
+  }
+
+  public async getStatus(): Promise<string> {
+    const query = this.queriesController.createQuery({
+      contract: this.networkConfigService.config.crowdfundingContract,
+      function: 'status',
+      arguments: [],
+    });
+
+    const response = await this.queriesController.runQuery(query);
+    const [status] = this.queriesController.parseQueryResponse(response);
+
+    console.log('status', status);
+
+    return status.name.toString();
   }
 }
