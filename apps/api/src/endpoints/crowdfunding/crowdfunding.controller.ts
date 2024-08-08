@@ -1,8 +1,11 @@
 import { CrowdfundingService } from '@libs/services/crowdfunding/crowdfunding.service';
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { BigNumber } from 'bignumber.js';
-import { NativeAuth, NativeAuthGuard } from '@multiversx/sdk-nestjs-auth'
+
+import { NativeAuth, NativeAuthGuard } from '@multiversx/sdk-nestjs-auth';
+import { CreateFundRequest } from '@libs/entities/create.fund.request';
 import { ESDTToken } from '@libs/entities/create.fund.request';
+
 
 @Controller('crowdfunding')
 export class CrowdfundingController {
@@ -23,10 +26,10 @@ export class CrowdfundingController {
     return await this.crowdfundingService.getDeadline();
   }
 
-
-  @Get('getDeposit/:address')
+  @Get('getDeposit')
   @UseGuards(NativeAuthGuard)
   async getDeposit(@NativeAuth('address') address: string): Promise<BigNumber> {
+    console.log('address', address);
     return await this.crowdfundingService.getDeposit(address);
   }
 
@@ -39,7 +42,6 @@ export class CrowdfundingController {
   async getStatus(): Promise<string> {
     return await this.crowdfundingService.getStatus();
   }
-
 
   @Post('fund/:address')
   @UseGuards(NativeAuthGuard)
