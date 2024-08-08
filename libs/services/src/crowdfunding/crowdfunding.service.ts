@@ -13,7 +13,8 @@ import abiRow from './crowdfunding-esdt.abi.json';
 import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
 import { CommonConfigService, NetworkConfigService } from '@libs/common';
 import { BigNumber } from 'bignumber.js';
-import { CreateFundRequest } from '@libs/entities/create.fund.request';
+import { CreateFundRequest } from '@libs/entities/entities/create.fund.request';
+//import { CreateClaimRequest } from '@libs/entities/entities/create.claim.request';
 
 @Injectable()
 export class CrowdfundingService {
@@ -37,7 +38,7 @@ export class CrowdfundingService {
     });
 
     this.transactionsFactory = new SmartContractTransactionsFactory({
-      config: new TransactionsFactoryConfig({chainID: networkConfigService.config.chainID}),
+      config: new TransactionsFactoryConfig({ chainID: networkConfigService.config.chainID }),
       abi,
     })
   }
@@ -132,25 +133,40 @@ export class CrowdfundingService {
   }
 
   public generateFundTransaction(address: string, body: CreateFundRequest): any {
-      const transaction = this.transactionsFactory.createTransactionForExecute({
-        sender: Address.fromBech32(address),
-        contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
-        function: "fund",
-        gasLimit: BigInt(10_000_000),
-        // arguments: [         // fara arguments, altfel da eroare
-        //   body.tokenId,
-        //   body.tokenNonce,
-        //   body.tokenAmount,
-        //   body.senderAddress    
-        // ],
-        tokenTransfers: [
-          new TokenTransfer({
-            token: new Token({ identifier: body.tokenId }),
-            amount: BigInt(body.tokenAmount)
-          })
-        ]
-      }).toPlainObject();
+    const transaction = this.transactionsFactory.createTransactionForExecute({
+      sender: Address.fromBech32(address),
+      contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
+      function: "fund",
+      gasLimit: BigInt(10_000_000),
+      // arguments: [         // fara arguments, altfel da eroare
+      //   body.tokenId,
+      //   body.tokenNonce,
+      //   body.tokenAmount,
+      //   body.senderAddress    
+      // ],
+      tokenTransfers: [
+        new TokenTransfer({
+          token: new Token({ identifier: body.tokenId }),
+          amount: BigInt(body.tokenAmount)
+        })
+      ]
+    }).toPlainObject();
 
-      return transaction;
-  } 
+    return transaction;
+  }
+
+
+
+
+  public generateClaimTransaction(address: string): any {
+    const transaction = this.transactionsFactory.createTransactionForExecute({
+      sender: Address.fromBech32(address),
+      contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
+      function: "claim",
+      gasLimit: BigInt(10_000_000),
+
+    }).toPlainObject();
+
+    return transaction;
+  }
 }

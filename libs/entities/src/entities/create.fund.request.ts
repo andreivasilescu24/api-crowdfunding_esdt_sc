@@ -9,12 +9,16 @@ export class CreateFundRequest {
     @ApiProperty()
     @IsNumber()
     tokenNonce!: number;
-    
+
     @ApiProperty()
     @IsNumber()
     tokenAmount!: bigint;
-    
+
     @ApiProperty()
     @IsString()
     senderAddress!: string;
 }
+// token_id: &str,
+//token_nonce: u64,
+//token_amount: u128,
+//address_type: AddressType,
