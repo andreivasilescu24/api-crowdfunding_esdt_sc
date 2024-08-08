@@ -11,7 +11,7 @@ export class NetworkConfigService {
   private readonly devnetConfig: NetworkConfig = {
     chainID: 'D',
     crowdfundingContract:
-      'erd1qqqqqqqqqqqqqpgquah6quktjq5qdauez49829md2x0n7qgmd8ssal39gn',
+      'erd1qqqqqqqqqqqqqpgq9xhvljn29ud49ydnllm54lr90c2vx8p4d8sscjmazv',
   };
   private readonly testnetConfig: NetworkConfig = {
     chainID: 'T',
