@@ -6,14 +6,18 @@ import {
   SmartContractTransactionsFactory,
   Token,
   TokenTransfer,
+  TransactionComputer,
   TransactionsFactoryConfig,
 } from '@multiversx/sdk-core/out';
 import { Injectable } from '@nestjs/common';
 import abiRow from './crowdfunding-esdt.abi.json';
 import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
+import { UserSigner } from "@multiversx/sdk-wallet";
 import { CommonConfigService, NetworkConfigService } from '@libs/common';
 import { BigNumber } from 'bignumber.js';
-import { CreateFundRequest } from '@libs/entities/create.fund.request';
+import { ESDTToken } from '@libs/entities/create.fund.request';
+import { promises } from 'fs';
+// import { CacheService } from '@multiversx/sdk-nestjs-cache';
 
 @Injectable()
 export class CrowdfundingService {
@@ -23,6 +27,7 @@ export class CrowdfundingService {
   constructor(
     private readonly networkConfigService: NetworkConfigService,
     private readonly commonConfigService: CommonConfigService,
+    //private readonly cachingService: CacheService,
   ) {
     const abi = AbiRegistry.create(abiRow);
     const queryRunner = new QueryRunnerAdapter({
@@ -131,26 +136,62 @@ export class CrowdfundingService {
     return status.name.toString();
   }
 
-  public generateFundTransaction(address: string, body: CreateFundRequest): any {
-      const transaction = this.transactionsFactory.createTransactionForExecute({
-        sender: Address.fromBech32(address),
-        contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
-        function: "fund",
-        gasLimit: BigInt(10_000_000),
-        // arguments: [         // fara arguments, altfel da eroare
-        //   body.tokenId,
-        //   body.tokenNonce,
-        //   body.tokenAmount,
-        //   body.senderAddress    
-        // ],
-        tokenTransfers: [
-          new TokenTransfer({
-            token: new Token({ identifier: body.tokenId }),
-            amount: BigInt(body.tokenAmount)
-          })
-        ]
-      }).toPlainObject();
 
+  public generateFundTransaction(address: string, body: ESDTToken, plainObject: boolean): any {
+    if(!body){
+      throw new Error('Missing body');
+    }
+    const token = {
+      tokenId: body.tokenId,
+      tokenNonce: body.tokenNonce,
+      tokenAmount: body.tokenAmount
+    };
+
+    console.log('Token object: ', token);
+    
+    const esdtToken = new TokenTransfer({
+        token: new Token({ 
+          identifier: body.tokenId,
+          nonce: BigInt(body.tokenNonce)
+         }),
+        amount: BigInt(body.tokenAmount)
+      });
+
+    console.log('ESDT token: ', esdtToken);
+    
+    const transaction = this.transactionsFactory.createTransactionForExecute({
+      sender: Address.fromBech32(address),
+      contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
+      function: "fund",
+      gasLimit: BigInt(20_000_000),
+      arguments: [],
+      tokenTransfers: [esdtToken]
+    });
+    if (plainObject) {
+      return transaction.toPlainObject();
+    }
+    else{
       return transaction;
+    }
   } 
+  
+  public async sendFundTransaction(address: string, body: ESDTToken) {
+    const transaction = this.generateFundTransaction(address, body, false);
+    const pemText = await promises.readFile("alice.pem", { encoding: "utf8"});
+    const networkProvider = new ApiNetworkProvider(this.commonConfigService.config.urls.api);
+    const aux = await networkProvider.getAccount(Address.fromBech32(transaction.sender));
+    transaction.nonce = BigInt(aux.nonce);
+    const signer = UserSigner.fromPem(pemText);
+    const computer = new TransactionComputer();
+    const serializedTx = computer.computeBytesForSigning(transaction);
+    transaction.signature = await signer.sign(serializedTx);
+
+    console.log(transaction);
+
+    const txHash = await networkProvider.sendTransaction(transaction);
+    console.log('txHash: ', txHash);
+  }
+
+
 }
+
