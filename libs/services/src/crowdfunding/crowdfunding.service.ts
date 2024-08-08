@@ -3,16 +3,22 @@ import {
   Address,
   QueryRunnerAdapter,
   SmartContractQueriesController,
+  SmartContractTransactionsFactory,
+  Token,
+  TokenTransfer,
+  TransactionsFactoryConfig,
 } from '@multiversx/sdk-core/out';
 import { Injectable } from '@nestjs/common';
 import abiRow from './crowdfunding-esdt.abi.json';
 import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
 import { CommonConfigService, NetworkConfigService } from '@libs/common';
 import { BigNumber } from 'bignumber.js';
+import { CreateFundRequest } from '@libs/entities/create.fund.request';
 
 @Injectable()
 export class CrowdfundingService {
-  readonly queriesController: SmartContractQueriesController;
+  private readonly queriesController: SmartContractQueriesController;
+  private readonly transactionsFactory: SmartContractTransactionsFactory;
 
   constructor(
     private readonly networkConfigService: NetworkConfigService,
@@ -29,6 +35,11 @@ export class CrowdfundingService {
       abi,
       queryRunner,
     });
+
+    this.transactionsFactory = new SmartContractTransactionsFactory({
+      config: new TransactionsFactoryConfig({chainID: networkConfigService.config.chainID}),
+      abi,
+    })
   }
   public async getCurrFunds(): Promise<BigNumber> {
     const query = this.queriesController.createQuery({
@@ -119,4 +130,27 @@ export class CrowdfundingService {
 
     return status.name.toString();
   }
+
+  public generateFundTransaction(address: string, body: CreateFundRequest): any {
+      const transaction = this.transactionsFactory.createTransactionForExecute({
+        sender: Address.fromBech32(address),
+        contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
+        function: "fund",
+        gasLimit: BigInt(10_000_000),
+        // arguments: [         // fara arguments, altfel da eroare
+        //   body.tokenId,
+        //   body.tokenNonce,
+        //   body.tokenAmount,
+        //   body.senderAddress    
+        // ],
+        tokenTransfers: [
+          new TokenTransfer({
+            token: new Token({ identifier: body.tokenId }),
+            amount: BigInt(body.tokenAmount)
+          })
+        ]
+      }).toPlainObject();
+
+      return transaction;
+  } 
 }
