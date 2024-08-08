@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNumber, IsString } from "class-validator"
 
-export class CreateFundRequest {
+export class ESDTToken {
     @ApiProperty()
     @IsString()
     tokenId!: string;
@@ -14,7 +14,4 @@ export class CreateFundRequest {
     @IsNumber()
     tokenAmount!: bigint;
     
-    @ApiProperty()
-    @IsString()
-    senderAddress!: string;
 }
