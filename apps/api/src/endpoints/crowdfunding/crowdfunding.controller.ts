@@ -32,6 +32,14 @@ export class CrowdfundingController {
     return await this.crowdfundingService.getDeposit(address);
   }
 
+  /*
+    @Get('getDeposit/:address')
+    @UseGuards(NativeAuthGuard)
+    async getDeposit(@Param('address', AddressValidationPipe) address: string): Promise<BigNumber> {
+      return await this.crowdfundingService.getDeposit(address);
+    }
+  */
+
   @Get('getTokenId')
   async getTokenId(): Promise<string> {
     return await this.crowdfundingService.getTokenId();
@@ -62,5 +70,30 @@ export class CrowdfundingController {
     @Body() body: ESDTToken,
   ): any {
     return this.crowdfundingService.sendFundTransaction(address, body);
+  }
+
+  /*
+    @Post('fund/:address')
+    @UseGuards(NativeAuthGuard)
+    async generateFundTransaction(
+      @Param('address', AddressValidationPipe) address: string,
+      @Body() body: CreateFundRequest
+    ): Promise<any> {
+      return await this.crowdfundingService.generateFundTransaction(address, body);
+    }
+      */
+
+  @Post('claim')
+  @UseGuards(NativeAuthGuard)
+  generateClaimTransaction(@NativeAuth('address') address: string): any {
+    return this.crowdfundingService.generateClaimTransaction(address, true);
+  }
+
+  @Post('claim/blockchain')
+  @UseGuards(NativeAuthGuard)
+  generateClaimTransactionBlockchain(
+    @NativeAuth('address') address: string,
+  ): any {
+    return this.crowdfundingService.sendClaimTransaction(address);
   }
 }

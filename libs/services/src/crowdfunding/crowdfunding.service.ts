@@ -6,6 +6,7 @@ import {
   SmartContractTransactionsFactory,
   Token,
   TokenTransfer,
+  Transaction,
   TransactionComputer,
   TransactionsFactoryConfig,
 } from '@multiversx/sdk-core/out';
@@ -15,6 +16,9 @@ import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
 import { UserSigner } from '@multiversx/sdk-wallet';
 import { CommonConfigService, NetworkConfigService } from '@libs/common';
 import { BigNumber } from 'bignumber.js';
+// import { CreateFundRequest } from '@libs/entities/entities/create.fund.request';
+
+//import { CreateClaimRequest } from '@libs/entities/entities/create.claim.request';
 
 // import { CreateFundRequest } from '@libs/entities/create.fund.request';
 import { CacheService } from '@multiversx/sdk-nestjs-cache';
@@ -193,6 +197,26 @@ export class CrowdfundingService {
     return status.name.toString();
   }
 
+  public generateClaimTransaction(
+    address: string,
+    plainObject: boolean,
+  ): Transaction | any {
+    const transaction = this.transactionsFactory.createTransactionForExecute({
+      sender: Address.fromBech32(address),
+      contract: Address.fromBech32(
+        this.networkConfigService.config.crowdfundingContract,
+      ),
+      function: 'claim',
+      gasLimit: BigInt(10_000_000),
+      arguments: [],
+    });
+    if (plainObject) {
+      return transaction.toPlainObject();
+    } else {
+      return transaction;
+    }
+  }
+
   public generateFundTransaction(
     address: string,
     body: ESDTToken,
@@ -206,7 +230,6 @@ export class CrowdfundingService {
       tokenNonce: body.tokenNonce,
       tokenAmount: body.tokenAmount,
     };
-
     console.log('Token object: ', token);
 
     const esdtToken = new TokenTransfer({
@@ -236,6 +259,20 @@ export class CrowdfundingService {
     }
   }
 
+  public async sendClaimTransaction(address: string) {
+    const transaction = this.generateClaimTransaction(address, false);
+    // const pemText = await promises.readFile("/home/butu-alexandra/API/api-crowdfunding_esdt_sc/alice.pem", { encoding: "utf8" });
+    const pemText = await promises.readFile('alice.pem', { encoding: 'utf8' });
+
+    const networkProvider = new ApiNetworkProvider(
+      this.commonConfigService.config.urls.api,
+    );
+    const aux = await networkProvider.getAccount(
+      Address.fromBech32(transaction.sender),
+    );
+    transaction.nonce = BigInt(aux.nonce);
+  }
+
   public async sendFundTransaction(address: string, body: ESDTToken) {
     const transaction = this.generateFundTransaction(address, body, false);
     const pemText = await promises.readFile('dan.pem', { encoding: 'utf8' });
@@ -246,6 +283,7 @@ export class CrowdfundingService {
       Address.fromBech32(transaction.sender),
     );
     transaction.nonce = BigInt(aux.nonce);
+
     const signer = UserSigner.fromPem(pemText);
     const computer = new TransactionComputer();
     const serializedTx = computer.computeBytesForSigning(transaction);
