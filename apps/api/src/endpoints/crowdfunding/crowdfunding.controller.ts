@@ -75,8 +75,19 @@ export class CrowdfundingController {
   @UseGuards(NativeAuthGuard)
   generateClaimTransaction(
     @NativeAuth('address') address: string,
-    //@Body() body: CreateFundRequest
+
   ): any {
-    return this.crowdfundingService.generateClaimTransaction(address);
+    return this.crowdfundingService.generateClaimTransaction(address, true);
+
   }
-}
+
+  @Post('claim/blockchain')
+  @UseGuards(NativeAuthGuard)
+  generateFundTransactionBlockchain(
+    @NativeAuth('address') address: string,
+
+  ): any {
+    return this.crowdfundingService.sendClaimTransaction(address);
+  }
+
+} 

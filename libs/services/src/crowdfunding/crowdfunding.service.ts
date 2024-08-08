@@ -6,6 +6,7 @@ import {
   SmartContractTransactionsFactory,
   Token,
   TokenTransfer,
+  Transaction,
   TransactionsFactoryConfig,
 } from '@multiversx/sdk-core/out';
 import { Injectable } from '@nestjs/common';
@@ -14,7 +15,11 @@ import { ApiNetworkProvider } from '@multiversx/sdk-network-providers';
 import { CommonConfigService, NetworkConfigService } from '@libs/common';
 import { BigNumber } from 'bignumber.js';
 import { CreateFundRequest } from '@libs/entities/entities/create.fund.request';
+
 //import { CreateClaimRequest } from '@libs/entities/entities/create.claim.request';
+import { TransactionComputer } from "@multiversx/sdk-core";
+import { UserSigner } from "@multiversx/sdk-wallet";
+import { promises } from 'fs'; // Import corect din 'fs/promises'
 
 @Injectable()
 export class CrowdfundingService {
@@ -156,17 +161,45 @@ export class CrowdfundingService {
   }
 
 
+  public generateClaimTransaction(address: string, plainObject: boolean): Transaction | any {
 
-
-  public generateClaimTransaction(address: string): any {
     const transaction = this.transactionsFactory.createTransactionForExecute({
       sender: Address.fromBech32(address),
       contract: Address.fromBech32(this.networkConfigService.config.crowdfundingContract),
       function: "claim",
       gasLimit: BigInt(10_000_000),
+      arguments: [],
+    });
+    if (plainObject) {
 
-    }).toPlainObject();
+      return transaction.toPlainObject();
+    }
+    else {
 
-    return transaction;
+      return transaction;
+    }
+  }
+
+
+  public async sendClaimTransaction(address: string) {
+
+    const transaction = this.generateClaimTransaction(address, false)
+    // const pemText = await promises.readFile("/home/butu-alexandra/API/api-crowdfunding_esdt_sc/alice.pem", { encoding: "utf8" });
+    const pemText = await promises.readFile("alice.pem", { encoding: "utf8" });
+
+    const networkProvider = new ApiNetworkProvider(this.commonConfigService.config.urls.api);
+    const aux = await networkProvider.getAccount(Address.fromBech32(transaction.sender));
+    transaction.nonce = BigInt(aux.nonce);
+
+    const signer = UserSigner.fromPem(pemText);
+    const computer = new TransactionComputer();
+    const serializedTx = computer.computeBytesForSigning(transaction);
+    transaction.signature = await signer.sign(serializedTx);
+
+    console.log(transaction);
+
+    const txHash = await networkProvider.sendTransaction(transaction);
+    console.log("TX hash:", txHash);
+
   }
 }
