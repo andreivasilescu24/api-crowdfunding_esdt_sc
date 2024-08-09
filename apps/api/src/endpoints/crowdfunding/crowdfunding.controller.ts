@@ -4,7 +4,7 @@ import { BigNumber } from 'bignumber.js';
 
 import { NativeAuth, NativeAuthGuard } from '@multiversx/sdk-nestjs-auth';
 // import { CreateFundRequest } from '@libs/entities/create.fund.request';
-import { ESDTToken } from '@libs/entities/create.fund.request';
+import { ESDTToken } from '@libs/entities/entities/create.fund.request';
 
 @Controller('crowdfunding')
 export class CrowdfundingController {

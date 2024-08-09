@@ -8,7 +8,6 @@ import {
   ShardTransaction,
   TransactionProcessor,
 } from '@multiversx/sdk-transaction-processor';
-import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
   CacheInfo,
@@ -18,6 +17,9 @@ import {
 import { AppConfigService } from '../config/app-config.service';
 import { ApiService } from '@multiversx/sdk-nestjs-http';
 // import { BigNumber } from 'bignumber.js';
+
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class ProcessorService {
@@ -31,6 +33,7 @@ export class ProcessorService {
     private readonly appConfigService: AppConfigService,
     private readonly networkConfigService: NetworkConfigService,
     private readonly apiService: ApiService,
+    @Inject('PUBSUB_SERVICE') private clientProxy: ClientProxy,
   ) {
     this.logger = new Logger(ProcessorService.name);
   }
@@ -77,6 +80,7 @@ export class ProcessorService {
           const uniqueInvalidationKeys = invalidationKeys.distinct();
           if (uniqueInvalidationKeys.length > 0) {
             await this.cacheService.deleteMany(uniqueInvalidationKeys);
+            this.clientProxy.emit('deleteCacheKeys', uniqueInvalidationKeys);
           }
         },
         getLastProcessedNonce: async (shardId) => {

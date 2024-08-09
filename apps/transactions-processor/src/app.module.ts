@@ -28,7 +28,7 @@ import { ApiModule } from '@multiversx/sdk-nestjs-http';
       useKeepAliveAgent: true,
     }),
   ],
-  providers: [ProcessorService],
+  providers: [ProcessorService, DynamicModuleUtils.getPubSubService()],
   controllers: [ApiMetricsController, HealthCheckController],
 })
 export class AppModule {}

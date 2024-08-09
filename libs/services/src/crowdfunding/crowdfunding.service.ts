@@ -23,7 +23,7 @@ import { BigNumber } from 'bignumber.js';
 // import { CreateFundRequest } from '@libs/entities/create.fund.request';
 import { CacheService } from '@multiversx/sdk-nestjs-cache';
 import { Constants } from '@multiversx/sdk-nestjs-common';
-import { ESDTToken } from '@libs/entities/create.fund.request';
+import { ESDTToken } from '@libs/entities/entities/create.fund.request';
 import { promises } from 'fs';
 // import { CacheService } from '@multiversx/sdk-nestjs-cache';
 
@@ -261,8 +261,7 @@ export class CrowdfundingService {
 
   public async sendClaimTransaction(address: string) {
     const transaction = this.generateClaimTransaction(address, false);
-    // const pemText = await promises.readFile("/home/butu-alexandra/API/api-crowdfunding_esdt_sc/alice.pem", { encoding: "utf8" });
-    const pemText = await promises.readFile('alice.pem', { encoding: 'utf8' });
+    const pemText = await promises.readFile('dan.pem', { encoding: 'utf8' });
 
     const networkProvider = new ApiNetworkProvider(
       this.commonConfigService.config.urls.api,
@@ -271,6 +270,17 @@ export class CrowdfundingService {
       Address.fromBech32(transaction.sender),
     );
     transaction.nonce = BigInt(aux.nonce);
+
+    const signer = UserSigner.fromPem(pemText);
+    const computer = new TransactionComputer();
+    const serializedTx = computer.computeBytesForSigning(transaction);
+    transaction.signature = await signer.sign(serializedTx);
+
+    console.log(transaction);
+
+    const txHash = await networkProvider.sendTransaction(transaction);
+
+    console.log('TX hash:', txHash);
   }
 
   public async sendFundTransaction(address: string, body: ESDTToken) {
